@@ -27,9 +27,25 @@ const {
     generics
 } = require('./generics.js');
 
-const Discord = require('discord.js');
-const client = new Discord.Client();
-const fs = require('fs');
+const { Client, GatewayIntentBits, Partials } = require('discord.js');
+const client = new Discord.Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers
+    ],
+
+    partials: [
+        Partials.Channel,
+        Partials.Message
+    ]
+})
 
 const { token, prefix, guildID, readyBotChannelID, moderatorRoleID, readyRoleID, memberRoleID } = require('./data/config.json');
 
@@ -116,6 +132,12 @@ client.on('message', message => {
         // Do their special code
         specials.get(message.author.id).special(message, bot);
     }
+});
+
+//gives users the member role upon joining the server
+client.on('guildMemberAdd', member => {
+    if (!member.roles.cache.has(bot.memberRole.id))
+        member.roles.add(bot.memberRole);
 });
 
 client.login(token);
