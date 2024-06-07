@@ -8,7 +8,8 @@ const {
     scanRAL,
     saveRAL,
     checkRAL,
-    react
+    react,
+    channelType
 } = require('./helpers.js');
 
 module.exports = {
@@ -21,8 +22,9 @@ module.exports = {
             desc: 'Clears the ready queue and removes the ready role from all members',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_ROLES')) {
+                if (message.member.permissions.has('MANAGE_ROLES')) {
                     bot.readyRole.members.forEach(member => {
                         member.roles.remove(bot.readyRole);
                     })
@@ -45,6 +47,7 @@ module.exports = {
             desc: 'Gives you the ready role',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 //in case they call ready list using list as an arg
                 if (args.includes('list')) {
@@ -79,7 +82,6 @@ module.exports = {
                         message.channel.send('We get it, you\'re ready');
                     }
                 }
-
             }
         }],
         ['notready', {
@@ -89,6 +91,7 @@ module.exports = {
             desc: 'Removes the ready role from you',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 if (message.member.roles.cache.has(bot.readyRole.id)) {
                     message.member.roles.remove(bot.readyRole);
@@ -126,6 +129,7 @@ module.exports = {
             desc: 'Adds you to the ready queue at the specified time (HH:MM am/pm)',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 //in case they call readyat list using list as an arg
                 if (args.includes('list')) {
@@ -187,6 +191,7 @@ module.exports = {
             desc: 'Gives you the ready role until the specified time (HH:MM am/pm)',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 //in case they call readyuntil list using list as an arg
                 if (args.includes('list')) {
@@ -248,6 +253,7 @@ module.exports = {
             desc: 'Adds you to the ready queue at the first specified time and queues you to become unready at the second specified time (HH:MM am/pm, HH:MM am/pm)',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 if (args.includes('cancel')) {
                     if (bot.sooners.get(message.member.id + 'at') && bot.sooners.get(message.member.id + 'until')) {
@@ -320,6 +326,7 @@ module.exports = {
             desc: 'Lists all currently ready members',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 var numReady = numReady(bot);
 
@@ -358,6 +365,7 @@ module.exports = {
             desc: 'Lists all members that will be ready later',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 var num = 0;
 
@@ -436,6 +444,7 @@ module.exports = {
             desc: 'Lists all members that are ready but will become unready later',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
                 var num = 0;
 
@@ -513,8 +522,9 @@ module.exports = {
             desc: 'Clears the ready queue',
             secret: false,
             spam: false,
+            reqsetroles: true,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_ROLES')) {
+                if (message.member.permissions.has('MANAGE_ROLES')) {
                     bot.sooners.forEach(sooner => {
                         bot.sooners.delete(sooner.id + sooner.type);
                     });
@@ -535,8 +545,9 @@ module.exports = {
             desc: 'Sets the ready guild to the current server',
             secret: true,
             spam: false,
+            reqsetroles: false,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_GUILD')) {
+                if (message.member.permissions.has('MANAGE_GUILD')) {
                     // Read data
                     const fs = require('fs');
                     var fileName = './data/config.json';
@@ -550,6 +561,7 @@ module.exports = {
                     fs.writeFile(fileName, JSON.stringify(data), e => {
                         if (e) throw e;
                     });
+                    message.react('✅');
                 }
                 else {
                     message.channel.send('You need the manage server permission to use this');
@@ -562,9 +574,10 @@ module.exports = {
             param: undefined,
             desc: 'Sets the ready channel to the current channel',
             secret: true,
-            spam: false,
+            spam: true,
+            reqsetroles: false,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_CHANNELS')) {
+                if (message.member.permissions.has('MANAGE_CHANNELS')) {
                     // Read data
                     const fs = require('fs');
                     var fileName = './data/config.json';
@@ -578,6 +591,7 @@ module.exports = {
                     fs.writeFile(fileName, JSON.stringify(data), e => {
                         if (e) throw e;
                     });
+                    message.react('✅');
                 }
                 else {
                     message.channel.send('You need the manage channels permission to use this');
@@ -590,11 +604,12 @@ module.exports = {
             param: 'role mention',
             desc: 'Sets the moderator role to the mentioned role',
             secret: true,
-            spam: false,
+            spam: true,
+            reqsetroles: false,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_GUILD')) {
+                if (message.member.permissions.has('MANAGE_GUILD')) {
                     var roleID;
-                    if (roleID = /<@&(\d{18})>/) {
+                    if (roleID = /<@&(\d{18})>/.exec(args)) {
                         // Read data
                         const fs = require('fs');
                         var fileName = './data/config.json';
@@ -608,6 +623,7 @@ module.exports = {
                         fs.writeFile(fileName, JSON.stringify(data), e => {
                             if (e) throw e;
                         });
+                        message.react('✅');
                     }
                     else {
                         message.channel.send('You must provide a role mention');
@@ -624,11 +640,12 @@ module.exports = {
             param: 'role mention',
             desc: 'Sets the ready role to the mentioned role',
             secret: true,
-            spam: false,
+            spam: true,
+            reqsetroles: false,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_ROLES')) {
+                if (message.member.permissions.has('MANAGE_ROLES')) {
                     var roleID;
-                    if (roleID = /<@&(\d{18})>/) {
+                    if (roleID = /<@&(\d{18})>/.exec(args)) {
                         // Read data
                         const fs = require('fs');
                         var fileName = './data/config.json';
@@ -642,6 +659,7 @@ module.exports = {
                         fs.writeFile(fileName, JSON.stringify(data), e => {
                             if (e) throw e;
                         });
+                        message.react('✅');
                     }
                     else {
                         message.channel.send('You must provide a role mention');
@@ -658,11 +676,12 @@ module.exports = {
             param: 'role mention',
             desc: 'Sets the member role to the mentioned role',
             secret: true,
-            spam: false,
+            spam: true,
+            reqsetroles: false,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_ROLES')) {
+                if (message.member.permissions.has('MANAGE_ROLES')) {
                     var roleID;
-                    if (roleID = /<@&(\d{18})>/) {
+                    if (roleID = /<@&(\d{18})>/.exec(args)) {
                         // Read data
                         const fs = require('fs');
                         var fileName = './data/config.json';
@@ -676,6 +695,7 @@ module.exports = {
                         fs.writeFile(fileName, JSON.stringify(data), e => {
                             if (e) throw e;
                         });
+                        message.react('✅');
                     }
                     else {
                         message.channel.send('You must provide a role mention');
@@ -692,11 +712,12 @@ module.exports = {
             param: 'A string of 1 or 2 characters',
             desc: 'Sets the bot prefix to the specified character(s)',
             secret: true,
-            spam: false,
+            spam: true,
+            reqsetroles: false,
             execute(message, args, bot) {
-                if (message.member.hasPermission('MANAGE_GUILD')) {
+                if (message.member.permissions.has('MANAGE_GUILD')) {
                     var nprefix;
-                    if (nprefix = /^\s*([^\s]{1,2})\s*$/) {
+                    if (nprefix = /^\s*([^\s]{1,2})\s*$/.exec(args)) {
                         // Read data
                         const fs = require('fs');
                         var fileName = './data/config.json';
@@ -710,6 +731,7 @@ module.exports = {
                         fs.writeFile(fileName, JSON.stringify(data), e => {
                             if (e) throw e;
                         });
+                        message.react('✅');
                     }
                     else {
                         message.channel.send('You must provide a string of 1 or 2 characters');
@@ -718,6 +740,19 @@ module.exports = {
                 else {
                     message.channel.send('You need the manage server permission to use this');
                 }
+            }
+        }],
+        ['reloadbot', {
+            name: 'reloadbot',
+            alts: ['reload','restart'],
+            param: undefined,
+            desc: 'Reloads the bot startup function, should only be needed on initial setup',
+            secret: true,
+            spam: true,
+            reqsetroles: false,
+            execute(message, args, bot) {
+                bot.loadBot();
+                message.channel.send('Reloaded!');
             }
         }],
         ['help', {
@@ -763,6 +798,7 @@ module.exports = {
             desc: 'How long exactly until Christmas?',
             secret: true,
             spam: false,
+            reqsetroles: false,
             execute(message, args, bot) {
                 var date = new Date();
 
@@ -796,6 +832,7 @@ module.exports = {
             desc: 'E',
             secret: true,
             spam: false,
+            reqsetroles: false,
             execute(message, args, bot) {
                 message.channel.send(
                     'EEEEE\n' +

@@ -9,7 +9,8 @@ const {
     scanRAL,
     saveRAL,
     checkRAL,
-    react
+    react,
+    channelType
 } = require('./helpers.js');
 
 // Import commands
@@ -27,6 +28,7 @@ const {
     generics
 } = require('./generics.js');
 
+const Discord = require("discord.js");
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const client = new Discord.Client({
     intents: [
@@ -58,22 +60,35 @@ var bot = {
     moderatorRole: undefined,
     readyRole: undefined,
     memberRole: undefined,
-    sooners: new Discord.Collection
+    sooners: new Discord.Collection,
+
+    loadBot() {
+        bot.guild = client.guilds.cache.get(guildID);
+        bot.readyBotChannel = client.channels.cache.get(readyBotChannelID);
+        if (bot.guild) {
+            bot.moderatorRole = bot.guild.roles.cache.get(moderatorRoleID);
+            bot.readyRole = bot.guild.roles.cache.get(readyRoleID);
+            bot.memberRole = bot.guild.roles.cache.get(memberRoleID);
+        }
+
+        if (bot.areBotValuesFilled()) {
+            updateNumReady(numReady(bot), bot);
+
+            midnightReset(bot);
+            scanRAL(bot);
+
+            checkRAL(bot);
+        }
+    },
+
+    areBotValuesFilled() {
+        if (bot.guild && bot.readyBotChannel && bot.moderatorRole && bot.readyRole && bot.memberRole)
+            return true;
+        return false;
+    }
 }
-
 client.once('ready', () => {
-    bot.guild = client.guilds.cache.get(guildID);
-    bot.readyBotChannel = client.channels.cache.get(readyBotChannelID);
-    bot.moderatorRole = bot.guild.roles.cache.get(moderatorRoleID);
-    bot.readyRole = bot.guild.roles.cache.get(readyRoleID);
-    bot.memberRole = bot.guild.roles.cache.get(memberRoleID);
-
-    updateNumReady(numReady(bot), bot);
-
-    midnightReset(bot);
-    scanRAL(bot);
-
-    checkRAL(bot);
+    bot.loadBot();
 
     console.log('Readybot 2 confirmed');
     console.log('Readybot never dies');
@@ -88,15 +103,15 @@ client.commands.forEach(command => {
     });
 });
 
-client.on('message', message => {
+client.on('messageCreate', message => {
     // Ignore messages from itself
     if (message.author.bot) return;
 
     // DM Channels
-    if (message.channel.type === 'dm') {
+    if (message.channel.type === channelType('dm')) {
     }
     // Text Channels
-    else if (message.channel.type === 'text') {
+    else if (message.channel.type === channelType('text')) {
         // Commands
         if (message.content.startsWith(bot.prefix)) {
             // splits the message into words after the prefix
@@ -107,13 +122,19 @@ client.on('message', message => {
 
             // Check if the command is in the list
             if (client.commands.get(command) != undefined) {
+                if (!client.commands.get(command).reqsetroles || (client.commands.get(command).reqsetroles && bot.areBotValuesFilled())) {
                 // Run the command
                 client.commands.get(command).execute(message, args, bot);
 
                 // Check if the command is in the readybot channel, and if its a spammy command
-                if (message.channel.id != bot.readyBotChannel.id && client.commands.get(command).spam != false) {
+                if (bot.readyBotChannel && message.channel.id != bot.readyBotChannel.id && client.commands.get(command).spam != false) {
                     message.channel.send('ayo, consider using the readybot channel (just an idea tho)');
                 }
+            }
+            else {
+                // React accordingly
+                message.channel.send('You must set all relevant values using the following commands (setserver, setchannel, setmodrole <role>, setreadyrole <role>, and setmemberrole <role>)');
+            }
             }
             // If the command is not in the list
             else {
@@ -136,7 +157,7 @@ client.on('message', message => {
 
 //gives users the member role upon joining the server
 client.on('guildMemberAdd', member => {
-    if (!member.roles.cache.has(bot.memberRole.id))
+    if (bot.memberRole && !member.roles.cache.has(bot.memberRole.id))
         member.roles.add(bot.memberRole);
 });
 

@@ -267,6 +267,13 @@ function react(params)
     }
 }
 
+function channelType(str) {
+    if (str == 'text')
+        return 0;
+    if (str == 'dm')
+        return 1;
+}
+
 module.exports = {
     midnightReset,
     parseTime,
@@ -277,5 +284,6 @@ module.exports = {
     scanRAL,
     saveRAL,
     checkRAL,
-    react
+    react,
+    channelType
 };

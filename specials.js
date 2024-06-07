@@ -1,3 +1,17 @@
+// Import Helpers
+const {
+    midnightReset,
+    parseTime,
+    parseMultiTime,
+    getTimeString,
+    numReady,
+    updateNumReady,
+    scanRAL,
+    saveRAL,
+    checkRAL,
+    react,
+    channelType
+} = require('./helpers.js');
 
 module.exports = {
     specials: new Map([
@@ -6,11 +20,11 @@ module.exports = {
             name: 'Jaspa',
             special(message, bot) {
                 //dm special
-                if (message.channel.type === 'dm') {
+                if (message.channel.type === channelType('dm')) {
                     message.channel.send('❤️');
                 }
                 //text special
-                else if (message.channel.type === 'text') {
+                else if (message.channel.type === channelType('text')) {
                 }
             }
         }],
@@ -20,10 +34,10 @@ module.exports = {
             name: 'Ben',
             special(message, bot) {
                 //dm special
-                if (message.channel.type === 'dm') {
+                if (message.channel.type === channelType('dm')) {
                 }
                 //text special
-                else if (message.channel.type === 'text') {
+                else if (message.channel.type === channelType('text')) {
                     if (Math.random() < .05) {
                         message.react('🤓');
                     }
